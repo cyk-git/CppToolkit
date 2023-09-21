@@ -17,7 +17,7 @@
 #include "log.h"
 
 namespace cpptoolkit {
-enum class ErrorLevel { E_WARNING, E_ERROR, E_CRITICAL };
+enum class ErrorLevel { E_WARNING, E_ERROR, E_CRITICAL,E_UNKNOWN };
 
 typedef boost::error_info<struct tag_error_level, ErrorLevel> error_level;
 
@@ -35,7 +35,7 @@ typedef void (*HandlerFunc)(boost::exception_ptr);
       BOOST_THROW_EXCEPTION(exception);          \
   }
 
-HandleStatus handle_exception(boost::exception_ptr e_ptr,
+inline HandleStatus handle_exception(boost::exception_ptr e_ptr,
                               HandlerFunc handle_warning = nullptr,
                               HandlerFunc handle_error = nullptr,
                               HandlerFunc handle_critical = nullptr) {
