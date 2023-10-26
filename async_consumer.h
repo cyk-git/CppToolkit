@@ -14,7 +14,7 @@
 #include <boost\exception\all.hpp>
 #include <boost\lockfree\queue.hpp>
 #include <memory>
-#include <cpp_toolkit\handle_exception.h>
+#include "handle_exception.h"
 #include <queue>
 #include "log.h"
 #include "locks.h"
