@@ -13,6 +13,7 @@
 
 #include <boost\exception\all.hpp>
 #include <boost\throw_exception.hpp>
+#include <cassert>
 
 #include "log.h"
 
@@ -76,9 +77,41 @@ void throw_exception(const T& exception, ErrorLevel level,
       boost::enable_error_info(exception) << error_level(level), loc);
 }
 
+inline void LogMessage(ErrorLevel level, const std::string& message) {
+  switch (level) {
+    case ErrorLevel::E_WARNING:
+      LOG_WARN(message);
+      break;
+    case ErrorLevel::E_UNKNOWN:
+    case ErrorLevel::E_ERROR:
+      LOG_ERROR(message);
+      break;
+    case ErrorLevel::E_CRITICAL:
+      LOG_CRITICAL(message);
+      break;
+    default:
+      assert(false && "Unknown ErrorLevel");
+  }
+}
+
+
 }  // namespace cpptoolkit
 
 #define CPPTOOLKIT_THROW_EXCEPTION(x,level) \
   ::cpptoolkit::throw_exception(x, level, BOOST_CURRENT_LOCATION)
+
+#define CPPTOOLKIT_CHECK_API_ERRORCODE(errorCode, noErrorCode, operationName, \
+                                       level)                                 \
+  do {                                                                        \
+    auto e_code = (errorCode);                                                \
+    if (e_code != noErrorCode) {                                              \
+      std::string errorMsg =                                                  \
+          std::string(operationName) +                                        \
+          " returned an error: " + std::to_string(e_code);                    \
+      ::cpptoolkit::LogMessage((level), errorMsg);                            \
+      CPPTOOLKIT_THROW_EXCEPTION(std::runtime_error(errorMsg), level);        \
+    }                                                                         \
+  } while (0)
+
 
 #endif  // CPPTOOLKIT_HANDLE_EXCEPTION_H_
