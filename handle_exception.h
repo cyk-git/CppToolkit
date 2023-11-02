@@ -77,7 +77,7 @@ void throw_exception(const T& exception, ErrorLevel level,
       boost::enable_error_info(exception) << error_level(level), loc);
 }
 
-inline void LogMessage(ErrorLevel level, const std::string& message) {
+inline void LogMessage(const ErrorLevel& level, const std::string& message) {
   switch (level) {
     case ErrorLevel::E_WARNING:
       LOG_WARN(message);

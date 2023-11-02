@@ -19,6 +19,7 @@ template <typename Mutex>
 class QStatusBarSink : public spdlog::sinks::base_sink<Mutex> {
  public:
   QStatusBarSink(QStatusBar *statusBar) : m_statusBar(statusBar) {}
+  QStatusBar *get_status_bar() { return m_statusBar; }
 
  protected:
   void sink_it_(const spdlog::details::log_msg &msg) override {
@@ -45,6 +46,22 @@ inline void AddQStatusBarSink(
   statusBarSink->set_formatter(
       std::make_unique<spdlog::pattern_formatter>("[%l] %v"));
   default_logger->sinks().push_back(statusBarSink);
+}
+
+inline void RemoveStatusBarSink(QStatusBar *statusBar) {
+  auto defaultLogger = spdlog::default_logger();
+  defaultLogger->sinks().erase(
+      std::remove_if(
+          defaultLogger->sinks().begin(), defaultLogger->sinks().end(),
+          [statusBar](const std::shared_ptr<spdlog::sinks::sink> &sink) {
+            auto ptr_q_status_bar_sink =
+                dynamic_cast<QStatusBarSink<std::mutex> *>(sink.get());
+            if (ptr_q_status_bar_sink != nullptr) {
+              return ptr_q_status_bar_sink->get_status_bar() == statusBar;
+            }
+            return false;
+          }),
+      defaultLogger->sinks().end());
 }
 
 }  // namespace cpptoolkit
