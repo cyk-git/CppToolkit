@@ -36,5 +36,62 @@ void InitLogger(
 
 std::string GetIdStr(std::thread* ptr_thread);
 
+//template <typename T>
+//inline std::string PreviewVector(const std::vector<T>& vec, int n = 5) {
+//  std::stringstream ss;
+//
+//  // If the vector size is less than or equal to 2n, convert the entire vector
+//  // to string
+//  if (vec.size() <= 2 * n) {
+//    for (const auto& item : vec) {
+//      ss << item << " ";
+//    }
+//  } else {
+//    // Add the first n elements
+//    for (int i = 0; i < n; ++i) {
+//      ss << vec[i] << " ";
+//    }
+//    ss << "... ";
+//    // Add the last n elements
+//    for (int i = vec.size() - n; i < vec.size(); ++i) {
+//      ss << vec[i] << " ";
+//    }
+//  }
+//
+//  return ss.str();
+//}
+
+template <typename T>
+std::string PreviewVector(
+    const std::vector<T>& vec, int n = 5,
+    std::function<std::string(const T&)> convert =
+        [](const T& val) -> std::string {
+      std::stringstream ss;
+      ss << val;
+      return ss.str();
+    }) {
+  std::stringstream ss;
+  // If the vector size is less than or equal to 2n, convert the entire vector
+  // to string
+  if (vec.size() <= 2 * n) {
+    for (const auto& item : vec) {
+      ss << convert(item) << " ";
+    }
+  } else {
+    // Add the first n elements
+    for (int i = 0; i < n; ++i) {
+      ss << convert(vec[i]) << " ";
+    }
+    ss << "... ";
+    // Add the last n elements
+    for (size_t i = vec.size() - n; i < vec.size(); ++i) {
+      ss << convert(vec[i]) << " ";
+    }
+  }
+
+  return ss.str();
+}
+
+
 } // namespace cpptoolkit
 #endif // CPPTOOLKIT_LOG_H_

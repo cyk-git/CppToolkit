@@ -16,6 +16,8 @@ void cpptoolkit::AsyncConsumer::DefaultCoreLoop() {
     SafeLockUp lock(lock_data_transfer_, 0);
     if (is_need_wait_for_data()) {
       lock.wait();
+    } else {
+      lock.signal_off();  // reset signal flag. 
     }
     if (!is_data_buffer_empty()) {
       LoadDataForProcess();

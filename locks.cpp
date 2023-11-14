@@ -57,4 +57,30 @@ SafeLockUp::~SafeLockUp() {
   return;
 }
 
+void SleepWaiter::WaitForCondition(
+    std::function<void(std::unique_lock<std::mutex>&, uint64_t)> waitFunc) {
+  uint64_t key = 0;
+  {
+    std::lock_guard<std::mutex> lock(mutex_for_flag_);
+    key = key_count++;  // Increment the key count
+    // Ensure the key is unique in the map
+    while (map_flag_wake_.count(key) > 0) {
+      key++;
+    }
+    map_flag_wake_[key] = false;  // Set the key's flag to false initially
+  }
+
+  // Temp mutex for condition variable
+  std::mutex temp_mutex;
+  std::unique_lock<std::mutex> temp_lk(temp_mutex);
+  waitFunc(temp_lk, key);  // Invoke the waiting logic
+
+  {
+    std::lock_guard<std::mutex> lock(mutex_for_flag_);
+    // Clean up: set the key's flag to true and remove it from the map
+    map_flag_wake_[key] = true;
+    map_flag_wake_.erase(key);
+  }
 }
+
+} // namespace cpptoolkit
