@@ -21,8 +21,8 @@
  *   has not called Notify() or Wait() before.
  */
 
-#ifndef CBMI_CAMERA_LOCKS_H_
-#define CBMI_CAMERA_LOCKS_H_
+#ifndef CPPTOOLKIT_CAMERA_LOCKS_H_
+#define CPPTOOLKIT_CAMERA_LOCKS_H_
 
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \
   TypeName(const TypeName&); \
@@ -272,4 +272,4 @@ class SleepWaiter {
 
 }
 
-#endif // CBMI_CAMERA_LOCKS_H_
+#endif // CPPTOOLKIT_CAMERA_LOCKS_H_

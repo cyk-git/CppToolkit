@@ -8,8 +8,8 @@
  * DateTime is a class to get and output current time.
  */
 
-#ifndef CBMI_CAMERA_DATE_TIME_H_
-#define CBMI_CAMERA_DATE_TIME_H_
+#ifndef CPPTOOLKIT_CAMERA_DATE_TIME_H_
+#define CPPTOOLKIT_CAMERA_DATE_TIME_H_
 
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \
   TypeName(const TypeName&); \
@@ -153,4 +153,4 @@ private:
 
 } // namespace cpptoolkit
 
-#endif // CBMI_CAMERA_DATE_TIME_H_
+#endif // CPPTOOLKIT_CAMERA_DATE_TIME_H_

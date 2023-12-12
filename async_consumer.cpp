@@ -19,11 +19,16 @@ void cpptoolkit::AsyncConsumer::DefaultCoreLoop() {
     } else {
       lock.signal_off();  // reset signal flag. 
     }
+    if (!flag_run_) {
+      return;
+    }
     if (!is_data_buffer_empty()) {
       LoadDataForProcess();
     }
     lock.unlock();
-    ProcessData();
+    if (flag_run_) {
+      ProcessData();
+    }
   } catch (...) {
     HandleException(boost::current_exception());
   }
