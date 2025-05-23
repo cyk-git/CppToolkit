@@ -17,6 +17,24 @@
 #include <xtensor-io/xhighfive.hpp>
 #include <xtensor/xarray.hpp>
 #include <xtensor/xio.hpp>
+#include <xtensor/xadapt.hpp>
+//#include <xtensor/xview.hpp>
+#ifdef slots
+#undef slots
+#define slots_undefed
+#endif
+
+#include <ATen/ATen.h>
+
+#ifdef slots_undefed
+#define slots Q_SLOTS
+#endif
+
+#include <CppToolkit/log.h>
+
+//#include <torch/types.h>
+//#include <torch\all.h>
+
 
 namespace cpptoolkit {
 //// This function template maps C++ types to corresponding HDF5 data types.
@@ -95,6 +113,40 @@ namespace cpptoolkit {
 //  return std::move(array);
 //}
 
+template <typename _Type>
+inline xt::xarray<_Type> TensorToXArray(const at::Tensor& tensor,
+                                        c10::optional<c10::ScalarType> dtype) {
+  if (tensor.dtype() != dtype) {
+    LOG_WARN("Type not match when convert tensor to xarray.");
+  }
+  std::vector<size_t> shape;
+  for (auto size : tensor.sizes().vec()) {
+    shape.push_back(static_cast<size_t>(size));
+  }
+  xt::xarray<_Type> result(shape);
+  auto options = at::TensorOptions().device(at::kCPU).dtype(dtype);
+  at::Tensor data_flat = at::from_blob(result.data(), tensor.sizes(), options);
+  data_flat.copy_(tensor);
+  return result;
+}
+
+template <typename _Type>
+inline std::vector<_Type> TensorToSTDVector(
+    const at::Tensor& tensor, c10::optional<c10::ScalarType> dtype) {
+  if (tensor.dtype() != dtype) {
+    LOG_WARN("Type not match when convert tensor to std::vector.");
+  }
+  auto flat_tensor = tensor.flatten();
+  size_t shape = flat_tensor.size(0);
+  std::vector<_Type> result(shape);
+
+  auto options = at::TensorOptions().device(at::kCPU).dtype(dtype);
+  at::Tensor data_flat =
+      at::from_blob(result.data(), flat_tensor.sizes(), options);
+  data_flat.copy_(tensor);
+  return result;
+}
+
 template <typename T_key>
 inline T_key ConvertToTKey(const std::string& str) {
   // Convert string to T_key
@@ -131,6 +183,96 @@ inline std::map<T_key, xt::xarray<T_value>> LoadGroupToMap(
 
   return result;
 }
+
+inline xt::xarray<double> ConvertToXArray(const at::Tensor& tensor) {
+  std::vector<size_t> shape;
+  for (auto size : tensor.sizes().vec()) {
+    shape.push_back(static_cast<size_t>(size));
+  }
+  xt::xarray<double> result(shape);
+  auto options = at::TensorOptions().device(at::kCPU).dtype(at::kDouble);
+  at::Tensor data_flat = at::from_blob(result.data(), tensor.sizes(), options);
+  data_flat.copy_(tensor);
+  return result;
+}
+
+inline xt::xarray<int> ConvertToXArray(
+    const std::vector<std::pair<int, int>>& data) {
+  xt::xarray<int> result(std::vector<size_t>{data.size(), 2});
+  if (!data.empty()) {
+    int i = 0;
+    for (const auto& pair : data) {
+      result.at(i, 0) = (pair.first);
+      result.at(i, 1) = (pair.second);
+      ++i;
+    }
+  }
+  return result;
+}
+inline xt::xarray<int> ConvertToXArray(const std::map<int, int>& data) {
+  xt::xarray<int> result(std::vector<size_t>{data.size(), 2});
+  if (!data.empty()) {
+    int i = 0;
+    for (const auto& pair : data) {
+      result.at(i, 0) = (pair.first);
+      result.at(i, 1) = (pair.second);
+      ++i;
+    }
+  }
+  return result;
+}
+inline xt::xarray<int64_t> ConvertToXArray(const std::vector<int64_t>& data) {
+  return xt::adapt(data, {data.size()});
+}
+inline xt::xarray<int> ConvertToXArray(const std::vector<int>& data) {
+  return xt::adapt(data, {data.size()});
+}
+inline xt::xarray<int> ConvertToXArray(const int data) {
+  return xt::xarray<int>({data});
+}
+
+template <typename __T>
+inline void save_data_to_h5(HighFive::File& File, std::string group_name,
+                            std::string dataset_name, const __T& data) {
+  xt::dump(File, group_name + dataset_name, ConvertToXArray(data));
+}
+
+template <typename __T>
+inline void save_data_to_h5(HighFive::File& File, std::string group_name,
+                            std::string dataset_name,
+                            const std::map<int, __T>& data) {
+  for (auto pair : data) {
+    xt::dump(File, group_name + dataset_name + "/" + std::to_string(pair.first),
+             ConvertToXArray(pair.second));
+  }
+}
+template <typename __T>
+void save_data_to_h5(HighFive::File& File, std::string group_name,
+                     std::string dataset_name,
+                     const std::map<std::string, __T>& data) {
+  for (auto pair : data) {
+    xt::dump(File, group_name + dataset_name + "/" + (pair.first),
+             ConvertToXArray(pair.second));
+  }
+}
+template <typename __T>
+inline void save_data_to_h5(HighFive::File& File, std::string group_name,
+                            std::string dataset_name,
+                            const std::vector<std::vector<__T>>& data) {
+  int i = 0;
+  for (auto elem : data) {
+    save_data_to_h5(File, group_name + dataset_name + "/", std::to_string(i),
+                    elem);
+    ++i;
+  }
+}
+template <typename __T>
+inline void save_data_to_h5(HighFive::File& File, std::string group_name,
+                            std::string dataset_name,
+                            const xt::xarray<__T>& data) {
+  xt::dump(File, group_name + dataset_name, data);
+}
+
 
 // template <typename T_value, typename T_key>
 // inline std::map<T_key, xt::xarray<T_value>> LoadGroupToMap(
