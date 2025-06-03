@@ -12,6 +12,7 @@
 
 #include <iostream>
 #include <vector>
+#include <mutex>
 #include <highfive/H5File.hpp>
 #include <highfive/H5Group.hpp>
 #include <xtensor-io/xhighfive.hpp>
@@ -274,6 +275,7 @@ inline void save_data_to_h5(HighFive::File& File, std::string group_name,
 }
 
 
+
 // template <typename T_value, typename T_key>
 // inline std::map<T_key, xt::xarray<T_value>> LoadGroupToMap(
 //     const H5::H5File& file, const std::string& groupName) {
@@ -303,6 +305,56 @@ inline void save_data_to_h5(HighFive::File& File, std::string group_name,
 //
 //   return result;
 // }
+
+
+/**  
+* @brief Thread-safe HighFive file handler with global access control.  
+* @note Ensure proper lifecycle management for file handling and mutex locks.  
+*  
+* Uses a Meyer's singleton mutex for C++11/14 compatibility.  
+*/  
+class SafeHighFiveFile {  
+public:  
+ /**  
+  * @brief Construct a new thread-safe file handler  
+  * @param filename Path to HDF5 file  
+  * @param openFlags File open mode (e.g. HighFive::File::Create)  
+  *    Available modes:  
+  *    - HighFive::File::ReadOnly: Open an existing file in read-only mode.  
+  *    - HighFive::File::ReadWrite: Open an existing file in read-write mode.  
+  *    - HighFive::File::Truncate: Overwrite an existing file if it already exists.  
+  *    - HighFive::File::Excl: Fail if the file already exists.  
+  *    - HighFive::File::Debug: Open the file in debug mode.  
+  *    - HighFive::File::Create: Create a non-existing file.  
+  *    - HighFive::File::Overwrite: Common write mode (equivalent to Truncate).  
+  *    - HighFive::File::OpenOrCreate: Open in read-write mode or create a new file if it does not exist.
+  */  
+ explicit SafeHighFiveFile(const std::string& filename, unsigned openFlags)
+     : file_lock_(mutex_instance())  // Lock mutex first
+ {
+   file_ = std::make_unique<HighFive::File>(filename, openFlags);
+ }
+ // Prohibit copying  
+ SafeHighFiveFile(const SafeHighFiveFile&) = delete;  
+ SafeHighFiveFile& operator=(const SafeHighFiveFile&) = delete;  
+ // Allow moving  
+ SafeHighFiveFile(SafeHighFiveFile&&) = default;  
+ SafeHighFiveFile& operator=(SafeHighFiveFile&&) = default;  
+ /**  
+  * @brief Get the underlying HighFive file object  
+  */  
+ HighFive::File& get() noexcept { return *file_; }  
+ const HighFive::File& get() const noexcept { return *file_; }  
+
+private:  
+ // Meyer's singleton pattern for mutex initialization  
+ static std::mutex& mutex_instance() {  
+   static std::mutex mtx;  
+   return mtx;  
+ }  
+ std::unique_lock<std::mutex> file_lock_;  // Lock managed by RAII  
+ std::unique_ptr<HighFive::File> file_;    // File resource  
+};
 
 }  // namespace cpptoolkit
 
