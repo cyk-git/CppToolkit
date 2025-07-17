@@ -10,15 +10,16 @@
 #ifndef CPPTOOLKIT_HDF5_TOOLKIT_H_
 #define CPPTOOLKIT_HDF5_TOOLKIT_H_
 
-#include <iostream>
-#include <vector>
-#include <mutex>
-#include <highfive/H5File.hpp>
-#include <highfive/H5Group.hpp>
-#include <xtensor-io/xhighfive.hpp>
-#include <xtensor/xarray.hpp>
-#include <xtensor/xio.hpp>
-#include <xtensor/xadapt.hpp>
+//#include <iostream>
+//#include <vector>
+//#include <mutex>
+//#include <highfive/H5File.hpp>
+//#include <highfive/H5Group.hpp>
+//#include <xtensor-io/xhighfive.hpp>
+//#include <xtensor/xarray.hpp>
+//#include <xtensor/xio.hpp>
+//#include <xtensor/xadapt.hpp>
+#include <CppToolkit/hdf5_toolkit_core.h>
 //#include <xtensor/xview.hpp>
 #ifdef slots
 #undef slots
@@ -148,42 +149,42 @@ inline std::vector<_Type> TensorToSTDVector(
   return result;
 }
 
-template <typename T_key>
-inline T_key ConvertToTKey(const std::string& str) {
-  // Convert string to T_key
-  std::stringstream ss(str);
-  T_key result;
-  ss >> result;
-  return result;
-}
+//template <typename T_key>
+//inline T_key ConvertToTKey(const std::string& str) {
+//  // Convert string to T_key
+//  std::stringstream ss(str);
+//  T_key result;
+//  ss >> result;
+//  return result;
+//}
 
-template <typename T_value, typename T_key>
-inline std::map<T_key, xt::xarray<T_value>> LoadGroupToMap(
-    const std::string& filename, const std::string& groupName) {
-  std::map<T_key, xt::xarray<T_value>> result;
-  HighFive::File file(filename, HighFive::File::ReadOnly);
-
-  // Open the group
-  HighFive::Group group = file.getGroup(groupName);
-
-  // Get the number of objects in the group
-  std::vector<std::string> objectList = group.listObjectNames();
-
-  // Iterate over each object in the group
-  for (const auto& datasetName : objectList) {
-    // Convert datasetName to T_key type
-    T_key key = ConvertToTKey<T_key>(datasetName);
-
-    // Load the dataset into an xtensor array
-    xt::xarray<T_value> array_value = xt::load_hdf5<xt::xarray<T_value>>(
-        filename, groupName + "/" + datasetName);
-
-    // Add to the result map
-    result[key] = std::move(array_value);
-  }
-
-  return result;
-}
+//template <typename T_value, typename T_key>
+//inline std::map<T_key, xt::xarray<T_value>> LoadGroupToMap(
+//    const std::string& filename, const std::string& groupName) {
+//  std::map<T_key, xt::xarray<T_value>> result;
+//  HighFive::File file(filename, HighFive::File::ReadOnly);
+//
+//  // Open the group
+//  HighFive::Group group = file.getGroup(groupName);
+//
+//  // Get the number of objects in the group
+//  std::vector<std::string> objectList = group.listObjectNames();
+//
+//  // Iterate over each object in the group
+//  for (const auto& datasetName : objectList) {
+//    // Convert datasetName to T_key type
+//    T_key key = ConvertToTKey<T_key>(datasetName);
+//
+//    // Load the dataset into an xtensor array
+//    xt::xarray<T_value> array_value = xt::load_hdf5<xt::xarray<T_value>>(
+//        filename, groupName + "/" + datasetName);
+//
+//    // Add to the result map
+//    result[key] = std::move(array_value);
+//  }
+//
+//  return result;
+//}
 
 inline xt::xarray<double> ConvertToXArray(const at::Tensor& tensor) {
   std::vector<size_t> shape;
@@ -197,82 +198,82 @@ inline xt::xarray<double> ConvertToXArray(const at::Tensor& tensor) {
   return result;
 }
 
-inline xt::xarray<int> ConvertToXArray(
-    const std::vector<std::pair<int, int>>& data) {
-  xt::xarray<int> result(std::vector<size_t>{data.size(), 2});
-  if (!data.empty()) {
-    int i = 0;
-    for (const auto& pair : data) {
-      result.at(i, 0) = (pair.first);
-      result.at(i, 1) = (pair.second);
-      ++i;
-    }
-  }
-  return result;
-}
-inline xt::xarray<int> ConvertToXArray(const std::map<int, int>& data) {
-  xt::xarray<int> result(std::vector<size_t>{data.size(), 2});
-  if (!data.empty()) {
-    int i = 0;
-    for (const auto& pair : data) {
-      result.at(i, 0) = (pair.first);
-      result.at(i, 1) = (pair.second);
-      ++i;
-    }
-  }
-  return result;
-}
-inline xt::xarray<int64_t> ConvertToXArray(const std::vector<int64_t>& data) {
-  return xt::adapt(data, {data.size()});
-}
-inline xt::xarray<int> ConvertToXArray(const std::vector<int>& data) {
-  return xt::adapt(data, {data.size()});
-}
-inline xt::xarray<int> ConvertToXArray(const int data) {
-  return xt::xarray<int>({data});
-}
-
-template <typename __T>
-inline void save_data_to_h5(HighFive::File& File, std::string group_name,
-                            std::string dataset_name, const __T& data) {
-  xt::dump(File, group_name + dataset_name, ConvertToXArray(data));
-}
-
-template <typename __T>
-inline void save_data_to_h5(HighFive::File& File, std::string group_name,
-                            std::string dataset_name,
-                            const std::map<int, __T>& data) {
-  for (auto pair : data) {
-    xt::dump(File, group_name + dataset_name + "/" + std::to_string(pair.first),
-             ConvertToXArray(pair.second));
-  }
-}
-template <typename __T>
-void save_data_to_h5(HighFive::File& File, std::string group_name,
-                     std::string dataset_name,
-                     const std::map<std::string, __T>& data) {
-  for (auto pair : data) {
-    xt::dump(File, group_name + dataset_name + "/" + (pair.first),
-             ConvertToXArray(pair.second));
-  }
-}
-template <typename __T>
-inline void save_data_to_h5(HighFive::File& File, std::string group_name,
-                            std::string dataset_name,
-                            const std::vector<std::vector<__T>>& data) {
-  int i = 0;
-  for (auto elem : data) {
-    save_data_to_h5(File, group_name + dataset_name + "/", std::to_string(i),
-                    elem);
-    ++i;
-  }
-}
-template <typename __T>
-inline void save_data_to_h5(HighFive::File& File, std::string group_name,
-                            std::string dataset_name,
-                            const xt::xarray<__T>& data) {
-  xt::dump(File, group_name + dataset_name, data);
-}
+//inline xt::xarray<int> ConvertToXArray(
+//    const std::vector<std::pair<int, int>>& data) {
+//  xt::xarray<int> result(std::vector<size_t>{data.size(), 2});
+//  if (!data.empty()) {
+//    int i = 0;
+//    for (const auto& pair : data) {
+//      result.at(i, 0) = (pair.first);
+//      result.at(i, 1) = (pair.second);
+//      ++i;
+//    }
+//  }
+//  return result;
+//}
+//inline xt::xarray<int> ConvertToXArray(const std::map<int, int>& data) {
+//  xt::xarray<int> result(std::vector<size_t>{data.size(), 2});
+//  if (!data.empty()) {
+//    int i = 0;
+//    for (const auto& pair : data) {
+//      result.at(i, 0) = (pair.first);
+//      result.at(i, 1) = (pair.second);
+//      ++i;
+//    }
+//  }
+//  return result;
+//}
+//inline xt::xarray<int64_t> ConvertToXArray(const std::vector<int64_t>& data) {
+//  return xt::adapt(data, {data.size()});
+//}
+//inline xt::xarray<int> ConvertToXArray(const std::vector<int>& data) {
+//  return xt::adapt(data, {data.size()});
+//}
+//inline xt::xarray<int> ConvertToXArray(const int data) {
+//  return xt::xarray<int>({data});
+//}
+//
+//template <typename __T>
+//inline void save_data_to_h5(HighFive::File& File, std::string group_name,
+//                            std::string dataset_name, const __T& data) {
+//  xt::dump(File, group_name + dataset_name, ConvertToXArray(data));
+//}
+//
+//template <typename __T>
+//inline void save_data_to_h5(HighFive::File& File, std::string group_name,
+//                            std::string dataset_name,
+//                            const std::map<int, __T>& data) {
+//  for (auto pair : data) {
+//    xt::dump(File, group_name + dataset_name + "/" + std::to_string(pair.first),
+//             ConvertToXArray(pair.second));
+//  }
+//}
+//template <typename __T>
+//void save_data_to_h5(HighFive::File& File, std::string group_name,
+//                     std::string dataset_name,
+//                     const std::map<std::string, __T>& data) {
+//  for (auto pair : data) {
+//    xt::dump(File, group_name + dataset_name + "/" + (pair.first),
+//             ConvertToXArray(pair.second));
+//  }
+//}
+//template <typename __T>
+//inline void save_data_to_h5(HighFive::File& File, std::string group_name,
+//                            std::string dataset_name,
+//                            const std::vector<std::vector<__T>>& data) {
+//  int i = 0;
+//  for (auto elem : data) {
+//    save_data_to_h5(File, group_name + dataset_name + "/", std::to_string(i),
+//                    elem);
+//    ++i;
+//  }
+//}
+//template <typename __T>
+//inline void save_data_to_h5(HighFive::File& File, std::string group_name,
+//                            std::string dataset_name,
+//                            const xt::xarray<__T>& data) {
+//  xt::dump(File, group_name + dataset_name, data);
+//}
 
 
 
@@ -313,48 +314,48 @@ inline void save_data_to_h5(HighFive::File& File, std::string group_name,
 *  
 * Uses a Meyer's singleton mutex for C++11/14 compatibility.  
 */  
-class SafeHighFiveFile {  
-public:  
- /**  
-  * @brief Construct a new thread-safe file handler  
-  * @param filename Path to HDF5 file  
-  * @param openFlags File open mode (e.g. HighFive::File::Create)  
-  *    Available modes:  
-  *    - HighFive::File::ReadOnly: Open an existing file in read-only mode.  
-  *    - HighFive::File::ReadWrite: Open an existing file in read-write mode.  
-  *    - HighFive::File::Truncate: Overwrite an existing file if it already exists.  
-  *    - HighFive::File::Excl: Fail if the file already exists.  
-  *    - HighFive::File::Debug: Open the file in debug mode.  
-  *    - HighFive::File::Create: Create a non-existing file.  
-  *    - HighFive::File::Overwrite: Common write mode (equivalent to Truncate).  
-  *    - HighFive::File::OpenOrCreate: Open in read-write mode or create a new file if it does not exist.
-  */  
- explicit SafeHighFiveFile(const std::string& filename, unsigned openFlags)
-     : file_lock_(mutex_instance())  // Lock mutex first
- {
-   file_ = std::make_unique<HighFive::File>(filename, openFlags);
- }
- // Prohibit copying  
- SafeHighFiveFile(const SafeHighFiveFile&) = delete;  
- SafeHighFiveFile& operator=(const SafeHighFiveFile&) = delete;  
- // Allow moving  
- SafeHighFiveFile(SafeHighFiveFile&&) = default;  
- SafeHighFiveFile& operator=(SafeHighFiveFile&&) = default;  
- /**  
-  * @brief Get the underlying HighFive file object  
-  */  
- HighFive::File& get() noexcept { return *file_; }  
- const HighFive::File& get() const noexcept { return *file_; }  
-
-private:  
- // Meyer's singleton pattern for mutex initialization  
- static std::mutex& mutex_instance() {  
-   static std::mutex mtx;  
-   return mtx;  
- }  
- std::unique_lock<std::mutex> file_lock_;  // Lock managed by RAII  
- std::unique_ptr<HighFive::File> file_;    // File resource  
-};
+//class SafeHighFiveFile {  
+//public:  
+// /**  
+//  * @brief Construct a new thread-safe file handler  
+//  * @param filename Path to HDF5 file  
+//  * @param openFlags File open mode (e.g. HighFive::File::Create)  
+//  *    Available modes:  
+//  *    - HighFive::File::ReadOnly: Open an existing file in read-only mode.  
+//  *    - HighFive::File::ReadWrite: Open an existing file in read-write mode.  
+//  *    - HighFive::File::Truncate: Overwrite an existing file if it already exists.  
+//  *    - HighFive::File::Excl: Fail if the file already exists.  
+//  *    - HighFive::File::Debug: Open the file in debug mode.  
+//  *    - HighFive::File::Create: Create a non-existing file.  
+//  *    - HighFive::File::Overwrite: Common write mode (equivalent to Truncate).  
+//  *    - HighFive::File::OpenOrCreate: Open in read-write mode or create a new file if it does not exist.
+//  */  
+// explicit SafeHighFiveFile(const std::string& filename, unsigned openFlags)
+//     : file_lock_(mutex_instance())  // Lock mutex first
+// {
+//   file_ = std::make_unique<HighFive::File>(filename, openFlags);
+// }
+// // Prohibit copying  
+// SafeHighFiveFile(const SafeHighFiveFile&) = delete;  
+// SafeHighFiveFile& operator=(const SafeHighFiveFile&) = delete;  
+// // Allow moving  
+// SafeHighFiveFile(SafeHighFiveFile&&) = default;  
+// SafeHighFiveFile& operator=(SafeHighFiveFile&&) = default;  
+// /**  
+//  * @brief Get the underlying HighFive file object  
+//  */  
+// HighFive::File& get() noexcept { return *file_; }  
+// const HighFive::File& get() const noexcept { return *file_; }  
+//
+//private:  
+// // Meyer's singleton pattern for mutex initialization  
+// static std::mutex& mutex_instance() {  
+//   static std::mutex mtx;  
+//   return mtx;  
+// }  
+// std::unique_lock<std::mutex> file_lock_;  // Lock managed by RAII  
+// std::unique_ptr<HighFive::File> file_;    // File resource  
+//};
 
 }  // namespace cpptoolkit
 
