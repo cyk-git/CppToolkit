@@ -12,6 +12,8 @@
 #define CPPTOOLKIT_LOG_H_
 
 #include <spdlog\spdlog.h>
+#include <spdlog/fmt/bundled/ostream.h>
+#include <spdlog/fmt/chrono.h>
 #include <sstream>
 
 namespace cpptoolkit {
@@ -61,6 +63,30 @@ std::string GetIdStr(std::thread* ptr_thread);
 //  return ss.str();
 //}
 
+//class LogLevelGuard {
+// public:
+//  explicit LogLevelGuard(spdlog::level::level_enum new_level)
+//      : logger_(spdlog::default_logger()), original_level_(logger_->level()) {
+//    logger_->set_level(new_level);
+//  }
+//
+//  LogLevelGuard(std::shared_ptr<spdlog::logger> logger,
+//                spdlog::level::level_enum new_level)
+//      : logger_(std::move(logger)), original_level_(logger_->level()) {
+//    logger_->set_level(new_level);
+//  }
+//
+//  ~LogLevelGuard() { logger_->set_level(original_level_); }
+//
+//  LogLevelGuard(const LogLevelGuard&) = delete;
+//  LogLevelGuard& operator=(const LogLevelGuard&) = delete;
+//
+// private:
+//  std::shared_ptr<spdlog::logger> logger_;
+//  spdlog::level::level_enum original_level_;
+//};
+
+
 template <typename T>
 std::string PreviewVector(
     const std::vector<T>& vec, int n = 5,
@@ -92,6 +118,20 @@ std::string PreviewVector(
   return ss.str();
 }
 
+//template <typename T>
+//inline std::string ToStringUseSStream(T data) {
+//  std::stringstream ss;
+//  ss << data;
+//  return ss.str();
+//}
+
+template <typename... Args>
+inline std::string ToStringStream(Args&&... args) {
+  std::stringstream ss;
+  using expander = int[];
+  (void)expander{0, (void(ss << std::forward<Args>(args)), 0)...};
+  return ss.str();
+}
 
 } // namespace cpptoolkit
 #endif // CPPTOOLKIT_LOG_H_
