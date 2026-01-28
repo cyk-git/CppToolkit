@@ -20,6 +20,8 @@
 #include <xtensor/xio.hpp>
 #include <xtensor/xadapt.hpp>
 //#include <xtensor/xview.hpp>
+
+#ifdef LIB_TORCH_ENABLE_CBMI
 #ifdef slots
 #undef slots
 #define slots_undefed
@@ -29,6 +31,7 @@
 
 #ifdef slots_undefed
 #define slots Q_SLOTS
+#endif
 #endif
 
 #include <CppToolkit/log.h>
@@ -113,6 +116,7 @@ namespace cpptoolkit {
 //
 //  return std::move(array);
 //}
+#ifdef LIB_TORCH_ENABLE_CBMI
 
 template <typename _Type>
 inline xt::xarray<_Type> TensorToXArray(const at::Tensor& tensor,
@@ -147,7 +151,7 @@ inline std::vector<_Type> TensorToSTDVector(
   data_flat.copy_(tensor);
   return result;
 }
-
+#endif
 template <typename T_key>
 inline T_key ConvertToTKey(const std::string& str) {
   // Convert string to T_key
@@ -184,6 +188,7 @@ inline std::map<T_key, xt::xarray<T_value>> LoadGroupToMap(
 
   return result;
 }
+#ifdef LIB_TORCH_ENABLE_CBMI
 
 inline xt::xarray<double> ConvertToXArray(const at::Tensor& tensor) {
   std::vector<size_t> shape;
@@ -196,7 +201,7 @@ inline xt::xarray<double> ConvertToXArray(const at::Tensor& tensor) {
   data_flat.copy_(tensor);
   return result;
 }
-
+#endif
 inline xt::xarray<int> ConvertToXArray(
     const std::vector<std::pair<int, int>>& data) {
   xt::xarray<int> result(std::vector<size_t>{data.size(), 2});
