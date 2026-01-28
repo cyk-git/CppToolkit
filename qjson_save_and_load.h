@@ -13,9 +13,11 @@
 #define CPPTOOLKIT_QT_JSON_SAVE_AND_LOAD_H_
 
 #include <QFile>
+#include <QFileDialog>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QMessageBox>
 #include <QtConcurrent/QtConcurrent>
 
 namespace cpptoolkit {
