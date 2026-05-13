@@ -16,9 +16,9 @@
 #include <highfive/H5File.hpp>
 #include <highfive/H5Group.hpp>
 #include <xtensor-io/xhighfive.hpp>
-#include <xtensor/xarray.hpp>
-#include <xtensor/xio.hpp>
-#include <xtensor/xadapt.hpp>
+#include <xtensor/containers/xarray.hpp>
+#include <xtensor/io/xio.hpp>
+#include <xtensor/containers/xadapt.hpp>
 //#include <xtensor/xview.hpp>
 //#ifdef slots
 //#undef slots
@@ -329,7 +329,7 @@ public:
   *    - HighFive::File::Overwrite: Common write mode (equivalent to Truncate).  
   *    - HighFive::File::OpenOrCreate: Open in read-write mode or create a new file if it does not exist.
   */  
- explicit SafeHighFiveFile(const std::string& filename, unsigned openFlags)
+ explicit SafeHighFiveFile(const std::string& filename, HighFive::File::AccessMode openFlags)
      : file_lock_(mutex_instance())  // Lock mutex first
  {
    file_ = std::make_unique<HighFive::File>(filename, openFlags);
