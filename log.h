@@ -12,8 +12,8 @@
 #define CPPTOOLKIT_LOG_H_
 
 #include <spdlog\spdlog.h>
-#include <spdlog/fmt/bundled/ostream.h>
-#include <spdlog/fmt/chrono.h>
+#include <fmt/ostream.h>
+#include <fmt/chrono.h>
 #include <sstream>
 
 namespace cpptoolkit {
